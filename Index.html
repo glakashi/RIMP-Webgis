@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project WebGIS (Fixed)</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css">
+    <style>
+    html, body { height: 100%; margin: 0; }
+    #map { position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
+    .icon { max-width: 70%; max-height: 70%; margin: 4px; }
+
+    /* Popup Styling */
+    .leaflet-popup-content { font-family: Arial, sans-serif; font-size: 13px; line-height: 1.4; color: #333; margin: 0; max-width: 320px; }
+    .leaflet-popup-content table { width: 100%; border-collapse: collapse; }
+    .leaflet-popup-content th, .leaflet-popup-content td { padding: 4px 6px; border: 1px solid #ddd; }
+    .leaflet-popup-content th { background: #f7f7f7; font-weight: bold; text-align: left; width: 40%; }
+    .leaflet-popup-content td { background: #fff; }
+
+    /* Legend styling */
+    .legend { background: white; padding: 8px; border-radius: 4px; box-shadow: 0 0 6px rgba(0,0,0,0.2); }
+    .legend .item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .legend .swatch { width: 18px; height: 14px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="label" style="font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif; font-size: 20pt ; position: absolute; top: 10px; left: 25%; background-color: rgba(255, 255, 255, 1); padding: 5px; border-radius: 5px; z-index: 1000;">WEBGIS RENTANG IRRIGATION MODERNIZATION PROJECT</div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- FileLayer Plugin Lib -->
+    <script src="https://unpkg.com/togeojson@0.14.2"></script>
+    <script src="https://cdn.jsdelivr.net/gh/makinacorpus/Leaflet.FileLayer/leaflet.filelayer.js"></script>
+    <!-- Other Needed Plugin/GeoJSON (your local files) -->
+    <script src="Tblock.js"></script>
+    <script src="Global_Box.js"></script>
+    <script src="Global_Tertiary.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+
+    <script>
+    // ---------- Map init ----------
+    var map = L.map('map').setView([-6.493053513471269, 108.31170522048976], 11);
+
+    // ---------- Highlight helpers ----------
+    var lastHighlight = null;
+    function highlightFeature(e) {
+        var layer = e.target;
+        // store original style so we can reset later
+        if (!layer._originalStyle && layer.setStyle) {
+            // copy a few relevant style props
+            layer._originalStyle = {
+                color: layer.options.color,
+                weight: layer.options.weight,
+                fillColor: layer.options.fillColor,
+                fillOpacity: layer.options.fillOpacity
+            };
+        }
+
+        if (layer.feature && layer.feature.geometry && (layer.feature.geometry.type === 'LineString' || layer.feature.geometry.type === 'MultiLineString')) {
+            if (layer.setStyle) layer.setStyle({ color: '#ffff00', weight: (layer._originalStyle && layer._originalStyle.weight ? layer._originalStyle.weight + 1 : 3) });
+        } else {
+            if (layer.setStyle) layer.setStyle({ fillColor: '#ffff00', fillOpacity: 1 });
+        }
+        lastHighlight = layer;
+    }
+    function resetHighlight(e) {
+        var layer = e.target || lastHighlight;
+        if (!layer) return;
+        if (layer.setStyle && layer._originalStyle) {
+            layer.setStyle(layer._originalStyle);
+        }
+        lastHighlight = null;
+    }
+
+    // ---------- Utility: remove empty table rows ----------
+    function removeEmptyRowsFromPopupContent(content, feature) {
+        var tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        var rows = tempDiv.querySelectorAll('tr');
+        for (var i = rows.length - 1; i >= 0; i--) {
+            var td = rows[i].querySelector('td');
+            if (!td) continue;
+            // remove row if empty/null/undefined/only whitespace
+            var text = td.textContent || '';
+            if (text.trim() === '' || text === 'null' || text === 'undefined') {
+                rows[i].parentNode.removeChild(rows[i]);
+            }
+        }
+        return tempDiv.innerHTML;
+    }
+
+    // ---------- Popup functions ----------
+    function pop_Tblock(feature, layer) {
+        layer.on({ mouseover: highlightFeature, mouseout: resetHighlight });
+
+        var popupContent = '<table>' +
+            '<tr><th>Bank</th><td>' + (feature.properties['bank'] ?? '') + '</td></tr>' +
+            '<tr><th>Canal Name</th><td>' + (feature.properties['Canal_name'] ?? '') + '</td></tr>' +
+            '<tr><th>Packages</th><td>' + (feature.properties['Packages'] ?? '') + '</td></tr>' +
+            '<tr><th>Block Name</th><td>' + (feature.properties['Nama_block'] ?? '') + '</td></tr>' +
+            '<tr><th>Approval</th><td>' + (feature.properties['Approval'] ?? '') + '</td></tr>' +
+            '<tr><th>Area</th><td>' + (feature.properties['AreaMCIM'] ?? '') + '</td></tr>' +
+            '<tr><th>Construction</th><td>' + (feature.properties['Constructi'] ?? '') + '</td></tr>' +
+            '<tr><th>Construction Type</th><td>' + (feature.properties['Cons_Type'] ?? '') + '</td></tr>' +
+            '<tr><th>Desa</th><td>' + (feature.properties['Desa'] ?? '') + '</td></tr>' +
+            '<tr><th>Kecamatan</th><td>' + (feature.properties['Kecamatan'] ?? '') + '</td></tr>' +
+            '<tr><th>Kota/Kab</th><td>' + (feature.properties['KotaKab'] ?? '') + '</td></tr>' +
+            '<tr><th>Contractor</th><td>' + (feature.properties['Contractor'] ?? '') + '</td></tr>' +
+            '</table>';
+
+        var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+        layer.bindPopup(content, { maxHeight: 400 });
+    }
+
+    function pop_Box(feature, layer) {
+        layer.on({ mouseover: highlightFeature, mouseout: resetHighlight });
+
+        var popupBox = '<table>' +
+            '<tr><th>Key</th><td>' + (feature.properties['Key'] ?? '') + '</td></tr>' +
+            '<tr><th>Tertiary Block</th><td>' + (feature.properties['Nama_block'] ?? '') + '</td></tr>' +
+            '<tr><th>Nama Box</th><td>' + (feature.properties['Nama_Box'] ?? '') + '</td></tr>' +
+            '</table>';
+
+        var content_box = removeEmptyRowsFromPopupContent(popupBox, feature);
+        layer.bindPopup(content_box, { maxHeight: 400 });
+    }
+
+    function pop_Tertiary(feature, layer) {
+        layer.on({ mouseover: highlightFeature, mouseout: resetHighlight });
+
+        var popupTertiary = '<table>' +
+            '<tr><th>Section</th><td>' + (feature.properties['Con_name'] ?? '') + '</td></tr>' +
+            '<tr><th>Length</th><td>' + (feature.properties['Length'] ?? '') + '</td></tr>' +
+            '<tr><th>Type</th><td>' + (feature.properties['canal_type'] ?? '') + '</td></tr>' +
+            '<tr><th>Tertiary Block</th><td>' + (feature.properties['Nama_block'] ?? '') + '</td></tr>' +
+            '</table>';
+
+        var content_tertiary = removeEmptyRowsFromPopupContent(popupTertiary, feature);
+        layer.bindPopup(content_tertiary, { maxHeight: 400 });
+    }
+
+    // ---------- Styles ----------
+    function style_tblock(feature) {
+        var att = feature.properties || {};
+        var type = att.Cons_Type;
+        var color = 'black', fill_color = 'black', fill_opacity = 0.3;
+
+        switch (att.RepVis) {
+          case 'District Authority': color = '#973C08'; fill_color = '#973C08'; break;
+          case 'MDA': color = '#432DD7'; fill_color = '#432DD7'; break;
+          case 'No Construction': color = '#E7180B'; fill_color = '#E7180B'; break;
+          case 'Ready': color = '#FE9A37'; fill_color = '#FE9A37'; break;
+          case 'Remaining': color = '#F1F5F9'; fill_color = '#F1F5F9'; break;
+          case 'Under Construction':
+            if (type === 'Precast') { color = '#46ECD5'; fill_color = '#46ECD5'; }
+            else if (type === 'Insitu') { color = '#FFF085'; fill_color = '#FFF085'; }
+            break;
+        }
+        return { color: color, fillColor: fill_color, fillOpacity: fill_opacity, weight: 1 };
+    }
+
+    function style_box(feature) {
+    var att = feature.properties || {};
+    var style = { radius: 6, fillOpacity: 0.9, weight: 1, color: '#333', fillColor: '#ff7800' }; // default
+    switch (att.LAYER) {
+        case 'Box Tersier':
+            style.color = 'brown';
+            style.fillColor = 'brown';
+            break;
+        case 'Box Kuarter':
+            style.color = 'blue';
+            style.fillColor = 'blue';
+            break;
+        case 'Box Division':
+            style.color = 'red';
+            style.fillColor = 'red';
+            break;
+        case 'Culvert':
+            style.color = 'purple';
+            style.fillColor = 'purple';
+            break;
+    }
+    return style;
+}
+
+    function style_tertiary(feature) {
+      var att = feature.properties || {};
+      var color = '#0077be'; // default
+
+
+      switch (att.Connection) {
+      case 'OT-T': color = '#2a7ad6'; break;
+      case 'OT-K': color = '#43f17a'; break;
+      case 'T-T': color = '#6f2ed8'; break;
+      case 'T-K': color = '#54d7ab'; break;
+      case 'K-END': color = '#88170b'; break;
+      }
+      return { color: color, weight: 2 };
+}
+;
+
+    // ---------- Layers (use dataset variable names from your local JS files) ----------
+    // NOTE: this code assumes the local scripts expose variables: tblock, Global_Box, Global_Tertiary.
+    // If your files export different variable names (e.g. 'box' or 'tertiary'), replace them here accordingly.
+
+    var Tblock = L.geoJSON(typeof tblock !== 'undefined' ? tblock : [], { style: style_tblock, onEachFeature: pop_Tblock }).addTo(map);
+
+    var boxLayer = L.geoJSON(typeof boxLayer !== 'undefined' ? boxLayer : [], {
+        pointToLayer: function(feature, latlng) { return L.circleMarker(latlng, style_box(feature)); },
+        onEachFeature: pop_Box
+    }).addTo(map);
+
+    var tertiaryLayer = L.geoJSON(typeof tertiaryLayer !== 'undefined' ? tertiaryLayer : [], { style: style_tertiary, onEachFeature: pop_Tertiary }).addTo(map);
+
+    // ---------- Basemaps ----------
+    var maptiler = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=W6d5CfR5JVewAHeVqQzP', { attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>' }).addTo(map);
+    var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
+    var darkmap = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 });
+
+    var basemaps = { 'Satellite Imagery': maptiler, 'Open Street Map': osm, 'ESRI World Imagery': esri, 'Carto Dark Map': darkmap };
+
+    var overlays = { 'Tertiary Blocks': Tblock, 'Boxes': boxLayer, 'Tertiary Canals': tertiaryLayer };
+
+    L.control.layers(basemaps, overlays, { collapsed: false }).addTo(map);
+
+    // ---------- Legend ----------
+    var legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function(map) {
+        var div = L.DomUtil.create('div', 'legend');
+        div.innerHTML += '<strong>RepVis</strong><br/>';
+        var items = [
+            ['District Authority', '#973C08'],
+            ['MDA', '#432DD7'],
+            ['No Construction', '#E7180B'],
+            ['Ready', '#FE9A37'],
+            ['Remaining', '#F1F5F9'],
+            ['Under Construction - Precast', '#46ECD5'],
+            ['Under Construction - Insitu', '#FFF085']
+        ];
+        items.forEach(function(it){
+            div.innerHTML += '<div class="item"><div class="swatch" style="background:'+it[1]+'"></div><div>'+it[0]+'</div></div>';
+        });
+        return div;
+    };
+    legend.addTo(map);
+
+    // ---------- FileLayer Upload (style renamed to avoid conflicts) ----------
+    var fileLayerStyle = { color: 'red', opacity: 1.0, fillOpacity: 0.6, weight: 2, interactive: false };
+    L.Control.FileLayerLoad.LABEL = '<img class="icon" src="https://static.thenounproject.com/png/folder-icon-652750-512.png" alt="file icon"/>';
+    var fileLayerControl = L.Control.fileLayerLoad({ fitBounds: true, layerOptions: { style: fileLayerStyle, pointToLayer: function (data, latlng) { return L.circleMarker(latlng, fileLayerStyle); } } });
+    fileLayerControl.addTo(map);
+    fileLayerControl.loader.on('data:loaded', function (e) { console.log('Loaded layer:', e.layer); });
+
+    // ---------- Fit map to visible data bounds if any ----------
+    function fitToAllLayers() {
+        var group = L.featureGroup();
+        [Tblock, boxLayer, tertiaryLayer].forEach(function(l){ if (l && l.getBounds && l.getBounds().isValid && l.getBounds().isValid()) { try { group.addLayer(l); } catch(e){} } });
+        try { var b = group.getBounds(); if (b && b.isValid()) map.fitBounds(b); } catch(e) {}
+    }
+    // Try fit on load (will do nothing if datasets empty)
+    setTimeout(fitToAllLayers, 800);
+
+    </script>
+</body>
+</html>
