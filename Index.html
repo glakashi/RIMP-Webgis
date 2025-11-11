@@ -5,7 +5,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project WebGIS</title>
-
     <!-- Leaflet CSS -->
     <link rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -13,88 +12,40 @@
         crossorigin="" />
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css">
-
     <style>
     html, body { height: 100%; margin: 0; }
     #map { position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
     .icon { max-width: 70%; max-height: 70%; margin: 4px; }
 
-    /* Popup Styling */
-    .leaflet-popup-content {
+    /* Info panel table styling */
+    #info-panel table { 
+        width: 100%; 
+        border-collapse: collapse; 
         font-family: Arial, sans-serif;
         font-size: 13px;
         line-height: 1.4;
         color: #333;
-        margin: 0;
-        max-width: 320px;
-    }
-    .leaflet-popup-content table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .leaflet-popup-content th,
-    .leaflet-popup-content td {
-        padding: 4px 6px;
-        border: 1px solid #ddd;
-    }
-    .leaflet-popup-content th {
-        background: #f7f7f7;
-        font-weight: bold;
-        text-align: left;
-        width: 40%;
-    }
-    .leaflet-popup-content td {
-        background: #fff;
-    }
-
-    /* ✅ Static Info Panel Table Styling */
-    #info-panel table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: Arial, sans-serif;
-        font-size: 13px;
-        color: #333;
     }
     #info-panel th, #info-panel td {
-        padding: 4px 6px;
+        padding: 6px;
         border: 1px solid #ddd;
     }
-    #info-panel th {
-        background: #f7f7f7;
-        font-weight: bold;
-        text-align: left;
-        width: 40%;
+    #info-panel th { 
+        background-color: #f7f7f7; 
+        font-weight: bold; 
+        text-align: left; 
+        width: 40%; 
     }
-    #info-panel td {
-        background: #fff;
-    }
+    #info-panel td { background-color: #fff; }
 
     /* Legend styling */
-    .legend {
-        background: white;
-        padding: 8px;
-        border-radius: 4px;
-        box-shadow: 0 0 6px rgba(0,0,0,0.2);
-    }
-    .legend .item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 4px;
-    }
-    .legend .swatch {
-        width: 18px;
-        height: 14px;
-        border: 1px solid #ccc;
-    }
-    </style>
-</head>
+    .legend { background: white; padding: 8px; border-radius: 4px; box-shadow: 0 0 6px rgba(0,0,0,0.2); }
+    .legend .item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .legend .swatch { width: 18px; height: 14px; border: 1px solid #ccc; }
 
-<body>
-    <div id="map"></div>
-
-    <div id="label" style="
-        font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    /* Label styling */
+    #label {
+        font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
         font-size: 20pt;
         position: absolute;
         top: 10px;
@@ -103,22 +54,30 @@
         background-color: rgba(255, 255, 255, 1);
         padding: 5px;
         border-radius: 5px;
-        z-index: 1000;">
-        WEBGIS RENTANG IRRIGATION MODERNIZATION PROJECT
-    </div>
+        z-index: 1000;
+    }
 
-    <img id="logo-left" src="pupr.png" alt="Left Logo" style="
-        height: 60px;
+    /* Logo styling for responsiveness */
+    .logo {
         position: absolute;
         top: 10px;
-        left: 200px;
-        z-index: 2000;">
-    <img id="logo-right" src="nippon.png" alt="Right Logo" style="
-        height: 60px;
-        position: absolute;
-        top: 10px;
-        right: 200px;
-        z-index: 2000;">
+        z-index: 2000;
+        width: 8vw;         /* 8% of viewport width */
+        max-width: 90px;     /* maximum width */
+        min-width: 50px;     /* minimum width */
+        height: auto;        /* maintain aspect ratio */
+    }
+    #logo-left { left: 100px; }
+    #logo-right { right: 200px; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div id="label">WEBGIS RENTANG IRRIGATION MODERNIZATION PROJECT</div>
+
+    <img id="logo-left" class="logo" src="pupr.png" alt="Left Logo">
+    <img id="logo-right" class="logo" src="nippon.png" alt="Right Logo">
 
     <div id="info-panel" style="
         position:absolute;
@@ -133,10 +92,7 @@
     </div>
 
     <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""></script>
-
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="https://unpkg.com/togeojson@0.14.2"></script>
     <script src="https://cdn.jsdelivr.net/gh/makinacorpus/Leaflet.FileLayer/leaflet.filelayer.js"></script>
     <script src="Tblock.js"></script>
@@ -145,8 +101,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
 
     <script>
+    // Map initialization
     var map = L.map('map').setView([-6.493053513471269, 108.31170522048976], 11);
 
+    // Highlight helpers
     var lastHighlight = null;
     function highlightFeature(e) {
         var layer = e.target;
@@ -158,24 +116,44 @@
                 fillOpacity: layer.options.fillOpacity
             };
         }
-        if (layer.feature.geometry.type.includes('Line')) {
-            layer.setStyle({ color: '#ffff00', weight: 3 });
+
+        if (layer.feature && layer.feature.geometry && 
+            (layer.feature.geometry.type === 'LineString' || layer.feature.geometry.type === 'MultiLineString')) {
+            if (layer.setStyle) layer.setStyle({ color: '#ffff00', weight: (layer._originalStyle && layer._originalStyle.weight ? layer._originalStyle.weight + 1 : 3) });
         } else {
-            layer.setStyle({ fillColor: '#ffff00', fillOpacity: 1 });
+            if (layer.setStyle) layer.setStyle({ fillColor: '#ffff00', fillOpacity: 1 });
         }
         lastHighlight = layer;
     }
-    function resetHighlight() {
-        if (lastHighlight && lastHighlight._originalStyle) {
-            lastHighlight.setStyle(lastHighlight._originalStyle);
+    function resetHighlight(e) {
+        var layer = e.target || lastHighlight;
+        if (!layer) return;
+        if (layer.setStyle && layer._originalStyle) {
+            layer.setStyle(layer._originalStyle);
         }
         lastHighlight = null;
     }
 
-    /* --- Static Info Panel Click Handlers --- */
+    // Utility to remove empty rows
+    function removeEmptyRowsFromPopupContent(content, feature) {
+        var tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        var rows = tempDiv.querySelectorAll('tr');
+        for (var i = rows.length - 1; i >= 0; i--) {
+            var td = rows[i].querySelector('td');
+            if (!td) continue;
+            var text = td.textContent || '';
+            if (text.trim() === '' || text === 'null' || text === 'undefined') {
+                rows[i].parentNode.removeChild(rows[i]);
+            }
+        }
+        return tempDiv.innerHTML;
+    }
+
+    // ---------- Popup functions converted to static info panel ----------
     function pop_Tblock(feature, layer) {
         layer.on({
-            click: () => {
+            click: function () {
                 let p = feature.properties;
                 document.getElementById("info-panel").innerHTML = `
                 <table>
@@ -192,7 +170,7 @@
                     <tr><th>Kota/Kab</th><td>${p.KotaKab ?? ''}</td></tr>
                     <tr><th>Contractor</th><td>${p.Contractor ?? ''}</td></tr>
                 </table>`;
-                highlightFeature({ target: layer });
+                highlightFeature({target: layer});
             },
             mouseover: highlightFeature,
             mouseout: resetHighlight
@@ -201,7 +179,7 @@
 
     function pop_Box(feature, layer) {
         layer.on({
-            click: () => {
+            click: function () {
                 let p = feature.properties;
                 document.getElementById("info-panel").innerHTML = `
                 <table>
@@ -209,7 +187,7 @@
                     <tr><th>Tertiary Block</th><td>${p.Nama_block ?? ''}</td></tr>
                     <tr><th>Nama Box</th><td>${p.Nama_Box ?? ''}</td></tr>
                 </table>`;
-                highlightFeature({ target: layer });
+                highlightFeature({target: layer});
             },
             mouseover: highlightFeature,
             mouseout: resetHighlight
@@ -218,7 +196,7 @@
 
     function pop_Tertiary(feature, layer) {
         layer.on({
-            click: () => {
+            click: function () {
                 let p = feature.properties;
                 document.getElementById("info-panel").innerHTML = `
                 <table>
@@ -227,41 +205,41 @@
                     <tr><th>Type</th><td>${p.canal_type ?? ''}</td></tr>
                     <tr><th>Tertiary Block</th><td>${p.Nama_block ?? ''}</td></tr>
                 </table>`;
-                highlightFeature({ target: layer });
+                highlightFeature({target: layer});
             },
             mouseover: highlightFeature,
             mouseout: resetHighlight
         });
     }
 
-    /* Styles */
+    // ---------- Styles ----------
     function style_tblock(feature) {
         var att = feature.properties || {};
         var type = att.Cons_Type;
-        var color = 'black', fill_color = 'black';
+        var color = 'black', fill_color = 'black', fill_opacity = 0.3;
 
         switch (att.RepVis) {
-          case 'District Authority': color = fill_color = '#973C08'; break;
-          case 'MDA': color = fill_color = '#432DD7'; break;
-          case 'No Construction': color = fill_color = '#E7180B'; break;
-          case 'Ready': color = fill_color = '#FE9A37'; break;
-          case 'Remaining': color = fill_color = '#F1F5F9'; break;
+          case 'District Authority': color = '#973C08'; fill_color = '#973C08'; break;
+          case 'MDA': color = '#432DD7'; fill_color = '#432DD7'; break;
+          case 'No Construction': color = '#E7180B'; fill_color = '#E7180B'; break;
+          case 'Ready': color = '#FE9A37'; fill_color = '#FE9A37'; break;
+          case 'Remaining': color = '#F1F5F9'; fill_color = '#F1F5F9'; break;
           case 'Under Construction':
-            if (type === 'Precast') color = fill_color = '#46ECD5';
-            if (type === 'Insitu') color = fill_color = '#FFF085';
+            if (type === 'Precast') { color = '#46ECD5'; fill_color = '#46ECD5'; }
+            else if (type === 'Insitu') { color = '#FFF085'; fill_color = '#FFF085'; }
             break;
         }
-        return { color, fillColor: fill_color, fillOpacity: 0.3, weight: 1 };
+        return { color: color, fillColor: fill_color, fillOpacity: fill_opacity, weight: 1 };
     }
 
     function style_box(feature) {
         var att = feature.properties || {};
         var style = { radius: 6, fillOpacity: 0.9, weight: 1, color: '#333', fillColor: '#ff7800' };
         switch (att.LAYER) {
-            case 'Box Tersier': style.color = style.fillColor = 'brown'; break;
-            case 'Box Kuarter': style.color = style.fillColor = 'blue'; break;
-            case 'Box Division': style.color = style.fillColor = 'red'; break;
-            case 'Culvert': style.color = style.fillColor = 'purple'; break;
+            case 'Box Tersier': style.color = 'brown'; style.fillColor = 'brown'; break;
+            case 'Box Kuarter': style.color = 'blue'; style.fillColor = 'blue'; break;
+            case 'Box Division': style.color = 'red'; style.fillColor = 'red'; break;
+            case 'Culvert': style.color = 'purple'; style.fillColor = 'purple'; break;
         }
         return style;
     }
@@ -270,41 +248,37 @@
         var att = feature.properties || {};
         var color = '#0077be';
         switch (att.Connection) {
-          case 'OT-T': color = '#2a7ad6'; break;
-          case 'OT-K': color = '#43f17a'; break;
-          case 'T-T': color = '#6f2ed8'; break;
-          case 'T-K': color = '#54d7ab'; break;
-          case 'K-END': color = '#88170b'; break;
+        case 'OT-T': color = '#2a7ad6'; break;
+        case 'OT-K': color = '#43f17a'; break;
+        case 'T-T': color = '#6f2ed8'; break;
+        case 'T-K': color = '#54d7ab'; break;
+        case 'K-END': color = '#88170b'; break;
         }
-        return { color, weight: 2 };
+        return { color: color, weight: 2 };
     }
 
-    var Tblock = L.geoJSON(tblock, { style: style_tblock, onEachFeature: pop_Tblock }).addTo(map);
-    var boxLayer = L.geoJSON(boxLayer, {
-        pointToLayer: (f, ll) => L.circleMarker(ll, style_box(f)),
+    // ---------- Layers ----------
+    var Tblock = L.geoJSON(typeof tblock !== 'undefined' ? tblock : [], { style: style_tblock, onEachFeature: pop_Tblock }).addTo(map);
+    var boxLayer = L.geoJSON(typeof boxLayer !== 'undefined' ? boxLayer : [], {
+        pointToLayer: function(feature, latlng) { return L.circleMarker(latlng, style_box(feature)); },
         onEachFeature: pop_Box
     }).addTo(map);
-    var tertiaryLayer = L.geoJSON(tertiaryLayer, { style: style_tertiary, onEachFeature: pop_Tertiary }).addTo(map);
+    var tertiaryLayer = L.geoJSON(typeof tertiaryLayer !== 'undefined' ? tertiaryLayer : [], { style: style_tertiary, onEachFeature: pop_Tertiary }).addTo(map);
 
-    var maptiler = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=W6d5CfR5JVewAHeVqQzP').addTo(map);
-    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
-    var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-    var darkmap = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
+    // ---------- Basemaps ----------
+    var maptiler = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=W6d5CfR5JVewAHeVqQzP', { attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>' }).addTo(map);
+    var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
+    var darkmap = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 });
+    var basemaps = { 'Satellite Imagery': maptiler, 'Open Street Map': osm, 'ESRI World Imagery': esri, 'Carto Dark Map': darkmap };
+    var overlays = { 'Tertiary Blocks': Tblock, 'Boxes': boxLayer, 'Tertiary Canals': tertiaryLayer };
+    L.control.layers(basemaps, overlays, { collapsed: false }).addTo(map);
 
-    L.control.layers({
-        'Satellite Imagery': maptiler,
-        'Open Street Map': osm,
-        'ESRI World Imagery': esri,
-        'Carto Dark Map': darkmap
-    }, {
-        'Tertiary Blocks': Tblock,
-        'Boxes': boxLayer,
-        'Tertiary Canals': tertiaryLayer
-    }, { collapsed: false }).addTo(map);
-
+    // ---------- Legend ----------
     var legend = L.control({ position: 'bottomright' });
-    legend.onAdd = () => {
+    legend.onAdd = function(map) {
         var div = L.DomUtil.create('div', 'legend');
+        div.innerHTML += '<strong>RepVis</strong><br/>';
         var items = [
             ['District Authority', '#973C08'],
             ['MDA', '#432DD7'],
@@ -314,24 +288,28 @@
             ['Under Construction - Precast', '#46ECD5'],
             ['Under Construction - Insitu', '#FFF085']
         ];
-        div.innerHTML += '<strong>Progress Status</strong><br/>';
-        items.forEach(it => {
-            div.innerHTML += `
-                <div class="item">
-                    <div class="swatch" style="background:${it[1]}"></div>
-                    <div>${it[0]}</div>
-                </div>`;
+        items.forEach(function(it){
+            div.innerHTML += '<div class="item"><div class="swatch" style="background:'+it[1]+'"></div><div>'+it[0]+'</div></div>';
         });
         return div;
     };
     legend.addTo(map);
 
-    setTimeout(() => {
-        try {
-            var group = L.featureGroup([Tblock, boxLayer, tertiaryLayer]);
-            map.fitBounds(group.getBounds());
-        } catch (e) {}
-    }, 800);
+    // ---------- FileLayer Upload ----------
+    var fileLayerStyle = { color: 'red', opacity: 1.0, fillOpacity: 0.6, weight: 2, interactive: false };
+    L.Control.FileLayerLoad.LABEL = '<img class="icon" src="https://static.thenounproject.com/png/folder-icon-652750-512.png" alt="file icon"/>';
+    var fileLayerControl = L.Control.fileLayerLoad({ fitBounds: true, layerOptions: { style: fileLayerStyle, pointToLayer: function (data, latlng) { return L.circleMarker(latlng, fileLayerStyle); } } });
+    fileLayerControl.addTo(map);
+    fileLayerControl.loader.on('data:loaded', function (e) { console.log('Loaded layer:', e.layer); });
+
+    // ---------- Fit map to visible data bounds ----------
+    function fitToAllLayers() {
+        var group = L.featureGroup();
+        [Tblock, boxLayer, tertiaryLayer].forEach(function(l){ if (l && l.getBounds && l.getBounds().isValid && l.getBounds().isValid()) { try { group.addLayer(l); } catch(e){} } });
+        try { var b = group.getBounds(); if (b && b.isValid()) map.fitBounds(b); } catch(e) {}
+    }
+    setTimeout(fitToAllLayers, 800);
+
     </script>
 </body>
 </html>
