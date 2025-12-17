@@ -108,7 +108,7 @@
     <div id="dashboard" style="
         position:absolute;
         top:330px;
-        left:10px;
+        right:10px;
         z-index:4000;
         width:260px;
         background:white;
@@ -121,7 +121,7 @@
         <strong>Monitoring Dashboard</strong>
         <hr style="margin:6px 0">
 
-        <div><strong>Design Approval</strong></div>
+        <div><strong>Left Bank Area</strong></div>
         <div id="stat-des-appr"></div>
 
         <hr style="margin:6px 0">
@@ -423,40 +423,71 @@ document.getElementById("packageFilter").addEventListener("change", function () 
     // 🔹 Update dashboard
     updateDashboard(selected);
 });
-    // ---------- Dashboard Counter ----------
-    function updateDashboard(selectedPackage = "ALL") {
-        var desApprCount = {};
-        var consStatCount = {};
+// ---------- Dashboard Counter ----------
+function updateDashboard(selectedPackage = "ALL") {
+    var areaTotal = 0;
+    var lengthTotal = 0;
 
-        Tblock.eachLayer(function (layer) {
-            var p = layer.feature.properties;
+    var areaByCan = {};
+    var lengthByCan = {};
 
-            // Apply package filter
-            if (selectedPackage !== "ALL" && p.PACKAGES !== selectedPackage) return;
+    var consStatCount = {};
 
-            // DES_APPR
-            var des = p.DES_APPR || "Unknown";
-            desApprCount[des] = (desApprCount[des] || 0) + 1;
+    Tblock.eachLayer(function (layer) {
+        var p = layer.feature.properties;
 
-            // CONS_STAT
-            var stat = p.CONS_STAT || "Unknown";
-            consStatCount[stat] = (consStatCount[stat] || 0) + 1;
-        });
+        // Skip if package does not match
+        if (selectedPackage !== "ALL" && p.PACKAGES !== selectedPackage) return;
 
-        // Render Design Approval
-        var desHtml = "";
-        for (var k in desApprCount) {
-            desHtml += `<div>${k}: <strong>${desApprCount[k]}</strong></div>`;
+        var area = parseFloat(p.AREA_HA) || 0;
+        var length = (parseFloat(p.LENGTH_M) || 0) / 1000;
+
+        areaTotal += area;
+        lengthTotal += length;
+
+        // Group by CANAL when a specific package is selected
+        if (selectedPackage !== "ALL") {
+            var can = p.CANAL || "Unknown";
+
+            areaByCan[can] = (areaByCan[can] || 0) + area;
+            lengthByCan[can] = (lengthByCan[can] || 0) + length;
         }
-        document.getElementById("stat-des-appr").innerHTML = desHtml || "-";
 
-        // Render Construction Status
-        var statHtml = "";
-        for (var k in consStatCount) {
-            statHtml += `<div>${k}: <strong>${consStatCount[k]}</strong></div>`;
+        // CONS_STAT always counted
+        var stat = p.CONS_STAT || "Unknown";
+        consStatCount[stat] = (consStatCount[stat] || 0) + 1;
+    });
+
+    /* ---------- Render AREA + LENGTH ---------- */
+    var html = "";
+
+    if (selectedPackage === "ALL") {
+        html = `
+            <div><strong>Total Area:</strong> ${areaTotal.toFixed(2)} Ha</div>
+            <div><strong>Total Length:</strong> ${lengthTotal.toFixed(2)} Km</div>
+        `;
+    } else {
+        for (var k in areaByCan) {
+            html += `
+                <div>
+                    <strong>${k}</strong><br>
+                    Area: ${areaByCan[k].toFixed(2)} Ha<br>
+                    Length: ${lengthByCan[k].toFixed(2)} Km
+                </div>
+                <hr style="margin:4px 0">
+            `;
         }
-        document.getElementById("stat-cons-stat").innerHTML = statHtml || "-";
     }
+
+    document.getElementById("stat-des-appr").innerHTML = html || "-";
+
+    /* ---------- Render Construction Status ---------- */
+    var statHtml = "";
+    for (var k in consStatCount) {
+        statHtml += `<div>${k}: <strong>${consStatCount[k]}</strong></div>`;
+    }
+    document.getElementById("stat-cons-stat").innerHTML = statHtml || "-";
+}
 
     // Initial load
     updateDashboard();
