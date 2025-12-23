@@ -2,11 +2,12 @@
 <html lang="en">
     <select id="packageFilter" style="
         position:absolute;
-        top:200px;
-        right:20px;
+        top:12rem;
+        right:1rem;
         z-index:4000;
-        padding:6px;
-        border-radius:4px;
+        padding:0.4rem;
+        border-radius:0.3rem;
+        font-size: 0.8rem;
     ">
         <option value="ALL">All Packages</option>
         <option value="LOS-01">LOS-01</option>
@@ -27,9 +28,9 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css">
     <style>
-    html, body { height: 100%; margin: 0; }
-    #map { position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
-    .icon { max-width: 70%; max-height: 70%; margin: 4px; }
+    html, body { height: 100%; margin: 0; } 
+    #map { position: absolute;inset:0;  } 
+    .icon { max-width: 70%; max-height: 70%; margin: 0.3rem; }
 
     /* Info panel table styling */
     #info-panel table { 
@@ -53,21 +54,21 @@
     #info-panel td { background-color: #ffffff; }
 
     /* Legend styling */
-    .legend { background: white; padding: 8px; border-radius: 4px; box-shadow: 0 0 6px rgba(0,0,0,0.2); }
-    .legend .item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .legend .swatch { width: 18px; height: 14px; border: 1px solid #ccc; }
+    .legend { background: white; padding: 0.6rem; border-radius: 0.5rem; box-shadow: 0 0 6px rgba(0,0,0,0.2); }
+    .legend .item { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.3rem; }
+    .legend .swatch { width: 14px; height: 12px; border: 1px solid #ccc; }
 
     /* Label styling */
     #label {
         font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-        font-size: 20pt;
+        font-size: clamp(1rem, 2.5vw, 1.4rem);
         position: absolute;
-        top: 10px;
+        top: 1rem;
         left: 50%;
         transform: translateX(-50%);
         background-color: rgba(255, 255, 255, 1);
-        padding: 5px;
-        border-radius: 5px;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
         z-index: 1000;
     }
 
@@ -75,15 +76,13 @@
     .logo {
         background-color: rgba(255, 255, 255, 1);
         position: absolute;
-        top: 10px;
+        top: 1rem;
         z-index: 2000;
-        width: 8vw;         /* 8% of viewport width */
-        max-width: 90px;     /* maximum width */
-        min-width: 50px;     /* minimum width */
+        width: clamp(48px, 8vw, 90px);
         height: auto;        /* maintain aspect ratio */
     }
-    #logo-left { left: 100px; }
-    #logo-right { right: 200px; }
+    #logo-left { left: 5rem; }
+    #logo-right { right: 12rem; }
     </style>
 </head>
 <body>
@@ -96,27 +95,31 @@
 
     <div id="info-panel" style="
         position:absolute;
-        bottom:20px;
-        left:20px;
-        width:300px;
+        bottom:1rem;
+        left:1rem;
+        width:min(90vw, 320px);
         background:white;
-        padding:10px;
-        border-radius:6px;
-        z-index:3000;">
+        padding:0.6rem;
+        border-radius:0.5rem;
+        z-index:3000;
+        max-height: 45vh;
+        overflow-y: auto;">
         Click a feature to see info
     </div>
     <div id="dashboard" style="
         position:absolute;
-        top:330px;
-        right:10px;
+        top:15rem;
+        right:1rem;
         z-index:4000;
-        width:260px;
+        width:min(90vw, 280px);
         background:white;
-        padding:10px;
-        border-radius:6px;
+        padding:0.6rem;
+        border-radius:0.5rem;
         font-family:Arial, sans-serif;
-        font-size:12px;
+        font-size:0.75rem;
         box-shadow:0 0 6px rgba(0,0,0,0.25);
+        max-height: 50vh;
+        overflow-y: auto;
     ">
         <strong>Monitoring Dashboard</strong>
         <hr style="margin:6px 0">
@@ -314,7 +317,7 @@
     var darkmap = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 });
     var basemaps = { 'Satellite Imagery': maptiler, 'Open Street Map': osm, 'ESRI World Imagery': esri, 'Carto Dark Map': darkmap };
     var overlays = { 'Tertiary Blocks': Tblock, 'Structures': boxLayer, 'Tertiary Canals': tertiaryLayer };
-    L.control.layers(basemaps, overlays, { collapsed: false }).addTo(map);
+    L.control.layers(basemaps, overlays, { collapsed: true }).addTo(map);
 
     // ---------- Center Map Control Button ----------
     var CenterControl = L.Control.extend({
