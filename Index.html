@@ -19,7 +19,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project WebGIS</title>
+    <title>WEBGIS MONITORING RIMP</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -53,11 +53,49 @@
     }
     #info-panel td { background-color: #ffffff; }
 
-    /* Legend styling */
-    .legend { background: white; padding: 0.6rem; border-radius: 0.5rem; box-shadow: 0 0 6px rgba(0,0,0,0.2); }
-    .legend .item { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.3rem; }
-    .legend .swatch { width: 14px; height: 12px; border: 1px solid #ccc; }
+/* ---------- Legend Container ---------- */
+.leaflet-control.legend {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    background: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    font-size: 12px;
+    z-index: 1000;
+    max-width: 90vw;
+}
 
+/* ---------- Legend Title ---------- */
+.legend-title {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+/* ---------- Legend Items (2 rows layout) ---------- */
+.legend {
+    display: grid;
+    grid-template-columns: repeat(4, auto); /* 8 items → 2 rows */
+    gap: 6px 14px;
+}
+
+/* ---------- Individual Item ---------- */
+.legend .item {
+    display: flex;
+    align-items: center;
+    white-space: wrap;
+}
+
+/* ---------- Color Box ---------- */
+.legend .swatch {
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    border: 1px solid #999;
+}
     /* Label styling */
     #label {
         font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
@@ -73,8 +111,15 @@
     }
 
     /* Logo styling for responsiveness */
-    .logo {
+    .logo-nippon {
         background-color: rgba(255, 255, 255, 1);
+        position: absolute;
+        top: 1rem;
+        z-index: 2000;
+        width: clamp(96px, 16vw, 150px);
+        height: auto;        /* maintain aspect ratio */
+    }
+        .logo {
         position: absolute;
         top: 1rem;
         z-index: 2000;
@@ -103,10 +148,10 @@
 <body>
     <div id="map"></div>
 
-    <div id="label">WEBGIS RENTANG IRRIGATION MODERNIZATION PROJECT</div>
+    <div id="label">RENTANG IRRIGATION MODERNIZATION PROJECT (RIMP IP-573)</div>
 
     <img id="logo-left" class="logo" src="pupr.png" alt="Left Logo">
-    <img id="logo-right" class="logo" src="nippon.png" alt="Right Logo">
+    <img id="logo-right" class="logo-nippon" src="nippon.png" alt="Right Logo">
 
     <div id="info-panel" style="
         position:absolute;
@@ -155,6 +200,7 @@
     <script src="Tblock.js"></script>
     <script src="Structures.js"></script>
     <script src="Tcanal.js"></script>
+    <script src="canal.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
 
     <script>
@@ -214,6 +260,7 @@
                 let p = feature.properties;
                 document.getElementById("info-panel").innerHTML = `
                 <table>
+                    <tr><th>Remarks</th><td>${p.REMARKS ?? ''}</td></tr>
                     <tr><th>Bank</th><td>${p.BANK ?? ''}</td></tr>
                     <tr><th>Canal Name</th><td>${p.CANAL ?? ''}</td></tr>
                     <tr><th>Packages</th><td>${p.PACKAGES ?? ''}</td></tr>
@@ -269,6 +316,24 @@
         });
     }
 
+        function pop_Canal(feature, layer) {
+        layer.on({
+            click: function () {
+                let p = feature.properties;
+                document.getElementById("info-panel").innerHTML = `
+                <table>
+                    <tr><th>Tertiary Block</th><td>${p.Package ?? ''}</td></tr>
+                    <tr><th>Section</th><td>${p.Canal_name ?? ''}</td></tr>
+                    <tr><th>Length</th><td>${p.length_m ?? ''} m</td></tr>
+                    <tr><th>Type</th><td>${p.Canal_type ?? ''}</td></tr>
+                </table>`;
+                highlightFeature({target: layer});
+            },
+            mouseover: highlightFeature,
+            mouseout: resetHighlight
+        });
+    }
+
     // ---------- Styles ----------
     function style_tblock(feature) {
         var att = feature.properties || {};
@@ -276,17 +341,17 @@
         var color = 'black', fill_color = 'black', fill_opacity = 0.4;
 
         switch (att.CONS_STAT) {
-          case 'District Authority': color = '#973C08'; fill_color = '#973C08'; break;
+          case 'District Authority': color = '#a83800'; fill_color = '#a83800'; break;
           case 'MDA': color = '#432DD7'; fill_color = '#432DD7'; break;
-          case 'No Construction': color = '#E7180B'; fill_color = '#E7180B'; break;
-          case 'Not Yet Started':
-            if (type === 'Precast') { color = '#58E625'; fill_color = '#58E625'; }
-            else if (type === 'Insitu') { color = '#E6A225'; fill_color = '#E6A225'; } 
+          case 'No Construction': color = '#e60000'; fill_color = '#e60000'; break;
+          case 'Ready':
+            if (type === 'Precast') { color = '#ffaa00'; fill_color = '#ffaa00'; }
+            else if (type === 'Insitu') { color = '#ffff00'; fill_color = '#ffff00'; } 
             break;
           case 'Remaining': color = '#F1F5F9'; fill_color = '#F1F5F9'; break;
           case 'Under Construction':
-            if (type === 'Precast') { color = '#46ECD5'; fill_color = '#46ECD5'; }
-            else if (type === 'Insitu') { color = '#FFF085'; fill_color = '#FFF085'; }
+            if (type === 'Precast') { color = '#00ffc5'; fill_color = '#00ffc5'; }
+            else if (type === 'Insitu') { color = '#55ff00'; fill_color = '#55ff00'; }
             break;
         }
         return { color: color, fillColor: fill_color, fillOpacity: fill_opacity, weight: 1 };
@@ -308,13 +373,24 @@
         var att = feature.properties || {};
         var color = '#0077be';
         switch (att.Connection) {
-        case 'OT-T': color = '#2a7ad6'; break;
+        case 'OT-T': color = '#eb2bf2'; break;
         case 'OT-K': color = '#43f17a'; break;
-        case 'T-T': color = '#6f2ed8'; break;
-        case 'T-K': color = '#54d7ab'; break;
-        case 'K-END': color = '#88170b'; break;
+        case 'T-T': color = '#54d7ab'; break;
+        case 'T-K': color = '#fcf239'; break;
+        case 'K-END': color = '#62c849'; break;
         }
         return { color: color, weight: 2 };
+    }
+
+        function style_canal(feature) {
+        var att = feature.properties || {};
+        var color = '#0077be';
+        switch (att.Canal_type) {
+        case 'Main Canal': color = '#092af0', weight = 5; break;
+        case 'Secondary Canal': color = '#11aed9', weight = 3; break;
+        case 'Drainage Canal': color = '#ff001b', weight = 3; break;
+        }
+        return { color: color, weight: weight };
     }
 
     // ---------- Layers ----------
@@ -322,16 +398,16 @@
     var boxLayer = L.geoJSON(typeof boxLayer !== 'undefined' ? boxLayer : [], {
         pointToLayer: function(feature, latlng) { return L.circleMarker(latlng, style_box(feature)); },
         onEachFeature: pop_Box
-    }).addTo(map);
-    var tertiaryLayer = L.geoJSON(typeof tertiaryLayer !== 'undefined' ? tertiaryLayer : [], { style: style_tertiary, onEachFeature: pop_Tertiary }).addTo(map);
-
+    });
+    var tertiaryLayer = L.geoJSON(typeof tertiaryLayer !== 'undefined' ? tertiaryLayer : [], { style: style_tertiary, onEachFeature: pop_Tertiary });
+    var canal = L.geoJSON(typeof canal !== 'undefined' ? canal : [], { style: style_canal, onEachFeature: pop_Canal }).addTo(map);
     // ---------- Basemaps ----------
     var maptiler = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=W6d5CfR5JVewAHeVqQzP', { attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>' }).addTo(map);
     var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
     var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
     var darkmap = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 });
     var basemaps = { 'Satellite Imagery': maptiler, 'Open Street Map': osm, 'ESRI World Imagery': esri, 'Carto Dark Map': darkmap };
-    var overlays = { 'Tertiary Blocks': Tblock, 'Structures': boxLayer, 'Tertiary Canals': tertiaryLayer };
+    var overlays = {'Structures': boxLayer, 'Tertiary Canals': tertiaryLayer, 'Tertiary Blocks': Tblock};
     L.control.layers(basemaps, overlays, { collapsed: true }).addTo(map);
 
     // ---------- Center Map Control Button ----------
@@ -370,25 +446,33 @@
     });
     map.addControl(new CenterControl());
     // ---------- Legend ----------
-    var legend = L.control({ position: 'bottomright' });
+    var legend = L.control({ position: 'bottomleft' });
     legend.onAdd = function(map) {
-        var div = L.DomUtil.create('div', 'legend');
-        div.innerHTML += '<strong>Legend</strong><br/>';
-        var items = [
-            ['District Authority', '#973C08'],
-            ['MDA', '#432DD7'],
-            ['No Construction', '#E7180B'],
-            ['Ready - Precast', '#58E625'],
-            ['Ready - Insitu', '#E6A225'],
-            ['Remaining', '#F1F5F9'],
-            ['Under Construction - Precast', '#46ECD5'],
-            ['Under Construction - Insitu', '#FFF085']
-        ];
-        items.forEach(function(it){
-            div.innerHTML += '<div class="item"><div class="swatch" style="background:'+it[1]+'"></div><div>'+it[0]+'</div></div>';
-        });
-        return div;
-    };
+    var div = L.DomUtil.create('div', 'legend');
+
+    div.innerHTML = `
+        <div class="legend">
+            ${[
+                ['District Authority', '#a83800'],
+                ['MDA', '#432DD7'],
+                ['No Construction', '#e60000'],
+                ['Ready - Precast', '#ffaa00'],
+                ['Ready - Insitu', '##ffff00'],
+                ['Remaining', '#F1F5F9'],
+                ['Under Construction - Precast', '#00ffc5'],
+                ['Under Construction - Insitu', '#55ff00']
+            ].map(it => `
+                <div class="item">
+                    <span class="swatch" style="background:${it[1]}"></span>
+                    <span>${it[0]}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    return div;
+};
+
     legend.addTo(map);
 
     // ---------- FileLayer Upload ----------
@@ -408,6 +492,24 @@
     // ---------- Filter by PACKAGES ----------
 document.getElementById("packageFilter").addEventListener("change", function () {
     var selected = this.value;
+function zoomToFilteredPackages(selectedPackage) {
+    var bounds = L.latLngBounds([]);
+
+    Tblock.eachLayer(function (layer) {
+        var p = layer.feature.properties;
+
+        if (selectedPackage === "ALL" || p.PACKAGES === selectedPackage) {
+            bounds.extend(layer.getBounds());
+        }
+    });
+
+    if (bounds.isValid()) {
+        map.fitBounds(bounds, {
+            padding: [30, 30],
+            maxZoom: 16
+        });
+    }
+}
     //---------- Tblock ----------
     Tblock.eachLayer(function (layer) {
         var pkg = layer.feature.properties.PACKAGES;
@@ -438,6 +540,8 @@ document.getElementById("packageFilter").addEventListener("change", function () 
         });
     });
 
+    // Zoom Packages
+    zoomToFilteredPackages(selected);
     // 🔹 Update dashboard
     updateDashboard(selected);
 });
@@ -481,16 +585,16 @@ function updateDashboard(selectedPackage = "ALL") {
 
     if (selectedPackage === "ALL") {
         html = `
-            <div><strong>Total Area:</strong> ${areaTotal.toFixed(2)} Ha</div>
-            <div><strong>Total Length:</strong> ${lengthTotal.toFixed(2)} Km</div>
+            <div><strong>Total Area:</strong> ${formatNumber(areaTotal, 2)} Ha</div>
+            <div><strong>Total Length:</strong> ${formatNumber(lengthTotal, 2)} Km</div>
         `;
     } else {
         for (var k in areaByCan) {
             html += `
                 <div>
                     <strong>${k}</strong><br>
-                    Area: ${areaByCan[k].toFixed(2)} Ha<br>
-                    Length: ${lengthByCan[k].toFixed(2)} Km
+                    Area: ${formatNumber(areaByCan[k], 2)} Ha<br>
+                    Length: ${formatNumber(lengthByCan[k], 2)} Km
                 </div>
                 <hr style="margin:4px 0">
             `;
@@ -506,7 +610,14 @@ function updateDashboard(selectedPackage = "ALL") {
     }
     document.getElementById("stat-cons-stat").innerHTML = statHtml || "-";
 }
-
+// ---------- Number formatter ----------
+function formatNumber(value, decimals = 2) {
+    const n = Number(value) || 0;
+    return n.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
+}
     // Initial load
     updateDashboard();
 
